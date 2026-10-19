@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Billbook</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Billbook">
+<meta name="theme-color" content="#0E7C86">
+<style>
+:root{--bg:#EEF3F6;--surface:#fff;--ink:#12263A;--muted:#5D7183;--line:#D5DFE6;--accent:#0E7C86;--accent-ink:#fff;--paid:#1F7A4D;--paid-bg:#DDF1E6;--due:#A55F00;--due-bg:#FCEBCB;--danger:#B3261E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A24;--surface:#162532;--ink:#E7EFF5;--muted:#93A8B8;--line:#27394A;--accent:#35B5BF;--accent-ink:#06222A;--paid:#6FD19B;--paid-bg:#17382A;--due:#F2B35A;--due-bg:#3C2D12;--danger:#FF8A80}}
+:root[data-theme="dark"]{--bg:#0E1A24;--surface:#162532;--ink:#E7EFF5;--muted:#93A8B8;--line:#27394A;--accent:#35B5BF;--accent-ink:#06222A;--paid:#6FD19B;--paid-bg:#17382A;--due:#F2B35A;--due-bg:#3C2D12;--danger:#FF8A80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.app{max-width:560px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:28px;font-weight:800;margin:4px 0 0;letter-spacing:-.02em}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+select,input{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+select.cur{width:auto;padding:6px 8px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.sum{display:flex;gap:10px;margin:16px 0}
+.sum div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.sum small{color:var(--muted);display:block}
+.sum b{font-size:20px;font-weight:800}
+.chips{display:flex;gap:8px;margin:12px 0}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:6px 14px;font:600 14px Manrope,system-ui,sans-serif}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bill{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;color:var(--ink);font:inherit}
+.bill .n{font-weight:800}.bill .m{color:var(--muted);font-size:14px}
+.bill .r{text-align:right;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;margin-top:2px}
+.tag.paid{background:var(--paid-bg);color:var(--paid)}.tag.due{background:var(--due-bg);color:var(--due)}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--accent);color:var(--accent-ink);border:0;border-radius:99px;padding:16px 24px;font:800 16px Manrope,system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.sheet{position:fixed;inset:0;background:var(--bg);overflow-y:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));z-index:20}
+.sheet .in{max-width:560px;margin:0 auto}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.link{background:none;border:0;color:var(--accent);font:600 16px Manrope,system-ui,sans-serif;padding:8px 0}
+label{display:block;font-size:14px;color:var(--muted);margin:12px 0 4px}
+.row{display:grid;grid-template-columns:1fr 56px 84px 32px;gap:6px;margin-bottom:8px;align-items:center}
+.row input{padding:9px 8px}
+.x{background:none;border:0;color:var(--danger);font-size:22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tot{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:16px 0}
+.tot div{display:flex;justify-content:space-between;padding:3px 0}
+.tot .g{font-size:20px;font-weight:800;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+.btn{width:100%;border:0;border-radius:12px;padding:14px;font:800 16px Manrope,system-ui,sans-serif;background:var(--accent);color:var(--accent-ink);margin-top:8px}
+.btn.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.del{background:none;color:var(--danger)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;z-index:30;font-weight:600}
+[hidden]{display:none!important}
+.biz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:12px}.biz summary{font-weight:600}
+.dlg{position:fixed;inset:0;background:rgba(10,20,30,.5);z-index:28;display:flex;align-items:flex-end;justify-content:center}
+.dlg .box{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.wa{background:#128C4A!important;color:#fff!important}
+.hint{color:var(--muted);font-size:14px}
+textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input[type=file]{padding:8px}
+.inv-wrap{position:fixed;inset:0;background:#8A97A3;overflow:auto;z-index:25;padding:calc(8px + env(safe-area-inset-top,0px)) 8px 24px}
+.inv-wrap .bar{background:var(--surface);border-radius:12px;padding:4px 14px;position:sticky;top:0;z-index:2;margin-bottom:8px}
+.a4{width:210mm;min-height:297mm;background:#fff;color:#111;padding:14mm;font:13px/1.4 Manrope,Arial,sans-serif;margin:0 auto;transform-origin:top left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.a4 h2{margin:0;font-size:22px}
+.a4 .hd{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #0E7C86;padding-bottom:10px}
+.a4 .ti{font-size:20px;font-weight:800;color:#0E7C86;text-align:right}
+.a4 .pt{display:flex;justify-content:space-between;gap:16px;margin:14px 0}
+.a4 .pt>div{flex:1}
+.a4 small{color:#555;display:block}
+.a4 table{width:100%;border-collapse:collapse;margin-top:6px}
+.a4 th{background:#0E7C86;color:#fff;text-align:left;padding:7px 8px;font-size:12px}
+.a4 td{padding:7px 8px;border-bottom:1px solid #D5DFE6}
+.a4 .num{text-align:right!important}
+.a4 .tt{margin-left:auto;width:60%;margin-top:12px}
+.a4 .tt div{display:flex;justify-content:space-between;padding:3px 8px}
+.a4 .tt .g{font-weight:800;font-size:16px;background:#E6F2F3;border-radius:4px}
+.a4 .ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:16px}
+.a4 .sig{text-align:center;border-top:1px solid #111;padding-top:4px;width:180px}
+@page{size:A4;margin:0}
+@media print{body::before{display:none}body>*:not(.inv-wrap){display:none!important}.inv-wrap{position:static;background:none;padding:0;overflow:visible}.inv-wrap .bar{display:none}.a4{zoom:1!important;margin:0}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="app" id="list">
+  <div class="top"><div><h1>Billbook</h1><div class="m" style="color:var(--muted)">Saved on this phone</div></div>
+  <select class="cur" id="cur" aria-label="Currency"><option>₹</option><option>$</option><option>€</option><option>£</option></select></div>
+  <div class="sum"><div><small>Unpaid</small><b id="sUnpaid">0</b></div><div><small>Collected</small><b id="sPaid">0</b></div></div>
+  <div class="two" style="margin-bottom:8px"><button class="btn alt" id="mdBtn" style="margin:0">Master data</button><button class="btn alt" id="ledBtn" style="margin:0">Ledger</button></div>
+<button class="btn alt" id="bkBtn" style="margin:0 0 12px">Backup and restore</button>
+<div class="hint" id="bkNote" hidden style="margin-bottom:12px"></div>
+<details class="biz" hidden><summary>Legacy</summary>
+<label for="bn">Business name</label><input id="bn">
+<label for="bg">Your GSTIN</label><input id="bg" maxlength="15" placeholder="22AAAAA0000A1Z5" autocapitalize="characters">
+<label for="ba">Address</label><input id="ba">
+<label for="bp">Phone</label><input id="bp" type="tel"></details>
+<input id="q" type="search" placeholder="Search customer or bill number">
+  <div class="chips" id="chips"></div>
+  <div id="bills"></div>
+</div>
+<button class="fab" id="newBtn">+ New bill</button>
+
+<div class="sheet" id="sheet" hidden><div class="in">
+  <div class="bar"><button class="link" id="back">Close</button><b id="ttl">New bill</b><span style="width:48px"></span></div>
+  <label for="bno">Bill number</label><input id="bno" autocapitalize="characters">
+  <label for="sel">Sold by (seller)</label><select id="sel"></select>
+  <label for="pick">Pick customer or vendor from master data</label><select id="pick"></select>
+  <div class="two"><div><label for="cust">Customer</label><input id="cust" placeholder="Name"></div><div><label for="ph">Phone</label><input id="ph" type="tel" placeholder="Optional"></div></div>
+  <label for="cg">Customer GSTIN (optional)</label><input id="cg" maxlength="15" placeholder="22AAAAA0000A1Z5" autocapitalize="characters">
+  <label for="ca">Customer address (optional)</label><input id="ca">
+  <label for="dt">Date</label><input id="dt" type="date">
+  <label for="vn">Vehicle number (optional)</label><input id="vn" autocapitalize="characters" placeholder="MH12AB1234">
+  <div class="two"><div><label for="vm">Vehicle type / model</label><input id="vm"></div><div><label for="vd">Driver name</label><input id="vd"></div></div>
+  <label>Items (description, qty, price)</label>
+  <div id="items"></div>
+  <button class="btn alt" id="addItem" style="margin-top:0">Add item</button>
+  <div class="two"><div><label for="tax">GST %</label><input id="tax" type="number" inputmode="decimal" min="0" value="0"></div><div><label for="disc">Discount</label><input id="disc" type="number" inputmode="decimal" min="0" value="0"></div></div>
+  <label for="gt">GST type</label><select id="gt"><option value="cs">CGST + SGST (same state)</option><option value="i">IGST (other state)</option></select>
+  <div class="tot"><div><span>Subtotal</span><span id="tSub"></span></div><div><span>GST</span><span id="tTax"></span></div><div><span>Discount</span><span id="tDisc"></span></div><div class="g"><span>Total</span><span id="tTot"></span></div></div>
+  <label for="st">Status</label><select id="st"><option value="due">Unpaid</option><option value="paid">Paid</option></select>
+  <button class="btn" id="save">Save bill</button>
+  <button class="btn wa" id="wa">Share on WhatsApp</button>
+  <button class="btn alt" id="share">More share options</button>
+  <button class="btn alt" id="print">A4 bill with barcode</button>
+  <button class="btn del" id="del" hidden>Delete bill</button>
+</div></div>
+<div class="sheet" id="md" hidden><div class="in">
+  <div class="bar"><button class="link" id="mdClose">Close</button><b>Master data</b><button class="link" id="mdAdd">Add</button></div>
+  <div class="chips" id="mdTabs"></div>
+  <div id="mdList"></div>
+  <div id="mdForm" hidden>
+    <label for="pn">Name</label><input id="pn">
+    <label for="pp">Phone (add country code for WhatsApp)</label><input id="pp" type="tel">
+    <label for="pg">GSTIN</label><input id="pg" maxlength="15" placeholder="22AAAAA0000A1Z5" autocapitalize="characters">
+    <label for="pa">Address</label><input id="pa">
+    <button class="btn" id="pSave">Save</button><button class="btn alt" id="pCancel">Cancel</button><button class="btn del" id="pDel" hidden>Delete</button>
+  </div>
+</div></div>
+<div class="sheet" id="led" hidden><div class="in">
+  <div class="bar"><button class="link" id="ledBack">Close</button><b id="ledTtl">Ledger</b><button class="link" id="ledAdd">Add payment</button></div>
+  <div id="ledList"></div>
+  <div id="ledDet" hidden></div>
+  <div id="payForm" hidden>
+    <label for="ypt">Party</label><select id="ypt"></select>
+    <div class="two"><div><label for="yam">Amount received</label><input id="yam" type="number" inputmode="decimal" min="0"></div><div><label for="ydt">Date</label><input id="ydt" type="date"></div></div>
+    <label for="ymd">Mode</label><select id="ymd"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Cheque</option></select>
+    <label for="ynt">Note (optional)</label><input id="ynt">
+    <button class="btn" id="ySave">Save payment</button><button class="btn alt" id="yCancel">Cancel</button><button class="btn del" id="yDel" hidden>Delete payment</button>
+  </div>
+</div></div>
+<div class="sheet" id="bk" hidden><div class="in">
+  <div class="bar"><button class="link" id="bkClose">Close</button><b>Backup and restore</b><span style="width:48px"></span></div>
+  <p class="hint" id="bkInfo"></p>
+  <button class="btn" id="bkDl">Save backup file</button>
+  <button class="btn alt" id="bkCopy">Copy backup text</button>
+  <label for="bkText">Backup text. If no file was saved, copy it from here. To restore, paste a backup here.</label>
+  <textarea id="bkText" rows="5"></textarea>
+  <button class="btn alt" id="bkRestoreTxt">Restore from pasted text</button>
+  <label for="bkFile">Restore from a backup file</label>
+  <input id="bkFile" type="file" accept=".json,application/json">
+  <p class="hint">Restoring replaces all bills, payments and master data on this device.</p>
+</div></div>
+<div class="dlg" id="after" hidden><div class="box"><b style="font-size:18px">Bill saved</b><p style="margin:4px 0 8px;color:var(--muted)">Send it to your customer now?</p><button class="btn wa" id="aWa">Share on WhatsApp</button><button class="btn alt" id="aAny">More share options</button><button class="btn del" id="aSkip">Not now</button></div></div>
+<div class="inv-wrap" id="invWrap" hidden>
+  <div class="bar"><button class="link" id="invClose">Close</button><button class="link" id="invPrint">Print / save PDF</button></div>
+  <div class="a4" id="inv"></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let store={bills:[],next:1,cur:'₹'};
+try{const s=localStorage.getItem('billbook-v1');if(s)store=Object.assign(store,JSON.parse(s))}catch(e){}
+const persist=()=>{try{localStorage.setItem('billbook-v1',JSON.stringify(store))}catch(e){toast('Could not save on this device')}};
+let filter='all',editing=null,items=[];
+const money=n=>store.cur+' '+(Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const calc=(its,tax,disc)=>{const sub=its.reduce((a,i)=>a+(+i.qty||0)*(+i.price||0),0);const t=sub*(+tax||0)/100;const tot=Math.max(0,sub+t-(+disc||0));return{sub,t,tot}};
+function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2200)}
+
+function renderList(){
+  $('cur').value=store.cur;
+  const tot=b=>calc(b.items,b.tax,b.disc).tot;
+  $('sUnpaid').textContent=money(totalDue());bkNoteUpdate();
+  $('sPaid').textContent=money(store.bills.filter(b=>b.status==='paid').reduce((a,b)=>a+tot(b),0));
+  $('chips').innerHTML=[['all','All'],['due','Unpaid'],['paid','Paid']].map(([k,l])=>`<button class="chip" data-f="${k}" aria-pressed="${filter===k}">${l}</button>`).join('');
+  const q=$('q').value.trim().toLowerCase();
+  const rows=store.bills.filter(b=>(filter==='all'||b.status===filter)&&(!q||(b.customer+' '+b.no).toLowerCase().includes(q))).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  $('bills').innerHTML=rows.length?rows.map(b=>`<button class="bill" data-id="${b.id}"><div><div class="n">${esc(b.customer||'No name')}</div><div class="m">${esc(b.no)} · ${esc(b.date)}</div></div><div class="r"><div class="n">${money(tot(b))}</div><span class="tag ${b.status}">${b.status==='paid'?'Paid':'Unpaid'}</span></div></button>`).join(''):`<div class="empty">${store.bills.length?'No bills match.':'No bills yet. Tap “New bill” to create your first one.'}</div>`;
+}
+$('chips').onclick=e=>{const f=e.target.dataset.f;if(f){filter=f;renderList()}};
+$('q').oninput=renderList;
+$('cur').onchange=e=>{store.cur=e.target.value;persist();renderList()};
+$('bills').onclick=e=>{const b=e.target.closest('.bill');if(b)openEditor(+b.dataset.id)};
+$('newBtn').onclick=()=>openEditor(null);
+
+function openEditor(id){
+  editing=id?store.bills.find(b=>b.id===id):null;
+  const b=editing||{customer:'',phone:'',cgst:'',gtype:'cs',date:new Date().toISOString().slice(0,10),items:[{d:'',qty:1,price:''}],tax:0,disc:0,status:'due'};
+  $('ttl').textContent=editing?editing.no:'New bill';$('bno').value=editing?editing.no:nextNo();
+  $('cust').value=b.customer;$('ph').value=b.phone||'';$('cg').value=b.cgst||'';$('gt').value=b.gtype||'cs';$('ca').value=b.caddr||'';$('vn').value=b.vno||'';$('vm').value=b.vmodel||'';$('vd').value=b.driver||'';$('dt').value=b.date;$('tax').value=b.tax;$('disc').value=b.disc;$('st').value=b.status;
+  items=b.items.map(i=>({...i}));
+  $('del').hidden=!editing;$('share').hidden=!editing;$('print').hidden=!editing;$('wa').hidden=!editing;
+  fillPickers(b);renderItems();$('sheet').hidden=false;$('list').hidden=true;$('newBtn').hidden=true;window.scrollTo(0,0);
+}
+function closeEditor(){$('sheet').hidden=true;$('list').hidden=false;$('newBtn').hidden=false;renderList()}
+function renderItems(){
+  $('items').innerHTML=items.map((i,k)=>`<div class="row"><input data-k="${k}" data-p="d" value="${esc(i.d)}" placeholder="Item" aria-label="Description"><input data-k="${k}" data-p="qty" type="number" inputmode="decimal" value="${esc(i.qty)}" aria-label="Quantity"><input data-k="${k}" data-p="price" type="number" inputmode="decimal" value="${esc(i.price)}" placeholder="0" aria-label="Price"><button class="x" data-rm="${k}" aria-label="Remove item">×</button></div>`).join('');
+  totals();
+}
+function totals(){const c=calc(items,$('tax').value,$('disc').value);$('tSub').textContent=money(c.sub);$('tTax').textContent=money(c.t);$('tDisc').textContent=money(+$('disc').value||0);$('tTot').textContent=money(c.tot)}
+$('items').oninput=e=>{const k=e.target.dataset.k;if(k!==undefined){items[k][e.target.dataset.p]=e.target.value;totals()}};
+$('items').onclick=e=>{const r=e.target.dataset.rm;if(r!==undefined){items.splice(+r,1);if(!items.length)items.push({d:'',qty:1,price:''});renderItems()}};
+$('addItem').onclick=()=>{items.push({d:'',qty:1,price:''});renderItems()};
+$('tax').oninput=$('disc').oninput=totals;
+$('back').onclick=closeEditor;
+
+$('save').onclick=()=>{
+  const clean=items.filter(i=>i.d.trim()||+i.price);
+  if(!$('cust').value.trim()){toast('Enter a customer name');return}
+  if(!clean.length){toast('Add at least one item');return}
+  const cg=$('cg').value.trim().toUpperCase();
+  if(cg&&!GST_RE.test(cg)){toast('GSTIN must be 15 characters, like 22AAAAA0000A1Z5');return}
+  const no=$('bno').value.trim();
+  if(!no){toast('Enter a bill number');return}
+  if(store.bills.some(x=>x!==editing&&x.no.toLowerCase()===no.toLowerCase())){toast(no+' is already used by another bill');return}
+  const data={customer:$('cust').value.trim(),phone:$('ph').value.trim(),no,cgst:cg,gtype:$('gt').value,caddr:$('ca').value.trim(),vno:$('vn').value.trim().toUpperCase(),vmodel:$('vm').value.trim(),driver:$('vd').value.trim(),sellerId:+$('sel').value||null,date:$('dt').value,items:clean,tax:+$('tax').value||0,disc:+$('disc').value||0,status:$('st').value};
+  if(editing){Object.assign(editing,data,{updated:Date.now()});lastSaved=editing}
+  else{const nb={id:Date.now(),...data};advance(no);store.bills.push(nb);lastSaved=nb}
+  persist();closeEditor();$('after').hidden=false;
+};
+$('del').onclick=()=>{if(editing&&confirm('Delete '+editing.no+'? This cannot be undone.')){store.bills=store.bills.filter(b=>b!==editing);persist();toast('Bill deleted');closeEditor()}};
+const GST_RE=/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/;
+store.biz=store.biz||{name:'',gstin:'',addr:'',phone:''};
+const bizMap={bn:'name',bg:'gstin',ba:'addr',bp:'phone'};
+for(const k in bizMap){$(k).value=store.biz[bizMap[k]]||'';$(k).oninput=e=>{store.biz[bizMap[k]]=k==='bg'?e.target.value.toUpperCase():e.target.value;persist()}}
+const fitInv=()=>{$('inv').style.zoom=Math.min(1,($('invWrap').clientWidth-16)/794)};
+$('print').onclick=()=>{
+  const b=editing,c=calc(b.items,b.tax,b.disc),bz=sellerFor(b),h=(b.tax||0)/2;
+  const gst=b.gtype==='i'?`<div><span>IGST (${b.tax}%)</span><span>${money(c.t)}</span></div>`:`<div><span>CGST (${h}%)</span><span>${money(c.t/2)}</span></div><div><span>SGST (${h}%)</span><span>${money(c.t/2)}</span></div>`;
+  const rows=b.items.map((i,k)=>`<tr><td>${k+1}</td><td>${esc(i.d||'Item')}</td><td class="num">${esc(i.qty)}</td><td class="num">${money(+i.price||0)}</td><td class="num">${money((+i.qty||0)*(+i.price||0))}</td></tr>`).join('');
+  $('inv').innerHTML=`<div class="hd"><div><h2>${esc(bz.name||'Your business name')}</h2>${bz.addr?`<small>${esc(bz.addr)}</small>`:''}${bz.phone?`<small>Phone: ${esc(bz.phone)}</small>`:''}${bz.gstin?`<small><b>GSTIN: ${esc(bz.gstin)}</b></small>`:''}</div><div><div class="ti">TAX INVOICE</div>${barcodeSVG(b.no)}</div></div>
+  <div class="pt"><div><small>Billed to</small><b>${esc(b.customer)}</b>${b.caddr?`<small>${esc(b.caddr)}</small>`:''}${b.phone?`<small>Phone: ${esc(b.phone)}</small>`:''}${b.cgst?`<small>GSTIN: ${esc(b.cgst)}</small>`:''}</div><div class="num"><small>Invoice no.</small><b>${esc(b.no)}</b><small>Date: ${esc(b.date)}</small><small>Status: ${b.status==='paid'?'PAID':'UNPAID'}</small></div></div>
+  ${b.vno||b.vmodel||b.driver?`<div class="pt" style="margin:0 0 10px"><div><small>Vehicle details</small><b>${esc(b.vno||'-')}</b> ${b.vmodel?esc(b.vmodel):''}${b.driver?`<small>Driver: ${esc(b.driver)}</small>`:''}</div></div>`:''}
+  <table><thead><tr><th>#</th><th>Description</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="tt"><div><span>Subtotal</span><span>${money(c.sub)}</span></div>${gst}${b.disc?`<div><span>Discount</span><span>- ${money(b.disc)}</span></div>`:''}<div class="g"><span>Total</span><span>${money(c.tot)}</span></div></div>
+  <div class="ft"><small>Thank you for your business.<br>This is a computer-generated invoice.</small><div class="sig">Authorised signatory</div></div>`;
+  $('invWrap').hidden=false;fitInv();
+};
+$('invPrint').onclick=()=>window.print();
+$('invClose').onclick=()=>{$('invWrap').hidden=true};
+$('share').onclick=async()=>{
+  const b=editing,c=calc(b.items,b.tax,b.disc);
+  const txt=[`${b.no} · ${b.date}`,`Customer: ${b.customer}`,'',...b.items.map(i=>`${i.d||'Item'} x${i.qty} @ ${i.price||0} = ${money((+i.qty||0)*(+i.price||0))}`),'',`Subtotal: ${money(c.sub)}`,`Tax (${b.tax}%): ${money(c.t)}`,`Discount: ${money(b.disc)}`,`Total: ${money(c.tot)}`,`Status: ${b.status==='paid'?'Paid':'Unpaid'}`].join('\n');
+  try{if(navigator.share){await navigator.share({title:b.no,text:txt})}else{await navigator.clipboard.writeText(txt);toast('Bill copied')}}catch(e){}
+};
+/* ---- master data ---- */
+store.parties=store.parties||[];
+if(!store.mig){if(store.biz&&(store.biz.name||store.biz.gstin))store.parties.push({id:Date.now(),kind:'seller',...store.biz});store.mig=1;persist()}
+const KL={customer:'Customers',vendor:'Vendors',seller:'Sellers'};
+let mdKind='customer',mdEdit=null,lastSaved=null;
+function sellerFor(b){return store.parties.find(p=>p.id===b.sellerId)||store.parties.find(p=>p.kind==='seller')||store.biz}
+function fillPickers(b){
+  const opt=p=>`<option value="${p.id}">${esc(p.name)}${p.kind==='vendor'?' (vendor)':''}</option>`;
+  $('pick').innerHTML='<option value="">Type details manually</option>'+store.parties.filter(p=>p.kind!=='seller').map(opt).join('');
+  const sl=store.parties.filter(p=>p.kind==='seller');
+  $('sel').innerHTML=(sl.length?'':'<option value="">Add a seller in Master data</option>')+sl.map(opt).join('');
+  $('sel').value=b.sellerId||(sl[0]&&sl[0].id)||'';
+  $('pick').value='';
+}
+$('pick').onchange=e=>{const p=store.parties.find(x=>String(x.id)===e.target.value);if(p){$('cust').value=p.name;$('ph').value=p.phone||'';$('cg').value=p.gstin||'';$('ca').value=p.addr||''}};
+function mdRender(){
+  $('mdTabs').innerHTML=Object.keys(KL).map(k=>`<button class="chip" data-k="${k}" aria-pressed="${mdKind===k}">${KL[k]}</button>`).join('');
+  const rows=store.parties.filter(p=>p.kind===mdKind).sort((a,b)=>a.name.localeCompare(b.name));
+  $('mdList').innerHTML=rows.length?rows.map(p=>`<button class="bill" data-id="${p.id}"><div><div class="n">${esc(p.name)}</div><div class="m">${esc([p.phone,p.gstin].filter(Boolean).join(' · ')||'No details')}</div></div></button>`).join(''):`<div class="empty">No ${KL[mdKind].toLowerCase()} yet. Tap Add to create one.</div>`;
+}
+function mdOpenForm(p){mdEdit=p;$('pn').value=p?p.name:'';$('pp').value=p&&p.phone||'';$('pg').value=p&&p.gstin||'';$('pa').value=p&&p.addr||'';$('pDel').hidden=!p;$('mdForm').hidden=false;$('mdList').hidden=true;$('mdTabs').hidden=true}
+function mdBack(){$('mdForm').hidden=true;$('mdList').hidden=false;$('mdTabs').hidden=false;mdRender()}
+$('mdBtn').onclick=()=>{$('md').hidden=false;mdBack()};
+$('mdClose').onclick=()=>{$('md').hidden=true};
+$('mdAdd').onclick=()=>mdOpenForm(null);
+$('mdTabs').onclick=e=>{const k=e.target.dataset.k;if(k){mdKind=k;mdRender()}};
+$('mdList').onclick=e=>{const b=e.target.closest('.bill');if(b)mdOpenForm(store.parties.find(p=>p.id===+b.dataset.id))};
+$('pCancel').onclick=mdBack;
+$('pSave').onclick=()=>{
+  const name=$('pn').value.trim(),g=$('pg').value.trim().toUpperCase();
+  if(!name){toast('Enter a name');return}
+  if(g&&!GST_RE.test(g)){toast('GSTIN must be 15 characters, like 22AAAAA0000A1Z5');return}
+  const d={name,phone:$('pp').value.trim(),gstin:g,addr:$('pa').value.trim()};
+  if(mdEdit)Object.assign(mdEdit,d);else store.parties.push({id:Date.now(),kind:mdKind,...d});
+  persist();mdBack();toast('Saved');
+};
+$('pDel').onclick=()=>{if(mdEdit&&confirm('Delete '+mdEdit.name+'?')){store.parties=store.parties.filter(p=>p!==mdEdit);persist();mdBack()}};
+/* ---- sharing ---- */
+function billText(b){
+  const c=calc(b.items,b.tax,b.disc),s=sellerFor(b);
+  return [`*${s.name||'Invoice'}*`,s.gstin?`GSTIN: ${s.gstin}`:null,`Invoice ${b.no} · ${b.date}`,`Bill to: ${b.customer}${b.cgst?' (GSTIN '+b.cgst+')':''}`,b.vno?`Vehicle: ${b.vno}${b.vmodel?' ('+b.vmodel+')':''}`:null,'',...b.items.map(i=>`${i.d||'Item'} x${i.qty} = ${money((+i.qty||0)*(+i.price||0))}`),'',`Subtotal: ${money(c.sub)}`,`GST (${b.tax}%): ${money(c.t)}`,b.disc?`Discount: ${money(b.disc)}`:null,`*Total: ${money(c.tot)}*`,`Status: ${b.status==='paid'?'Paid':'Unpaid'}`].filter(x=>x!==null).join('\n');
+}
+function shareWA(b){let n=(b.phone||'').replace(/\D/g,'');if(n.length===10&&store.cur==='₹')n='91'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(billText(b)),'_blank')}
+async function shareAny(b){const t=billText(b);try{if(navigator.share)await navigator.share({title:b.no,text:t});else{await navigator.clipboard.writeText(t);toast('Bill copied. Paste it in any app')}}catch(e){}}
+$('wa').onclick=()=>shareWA(editing);
+$('share').onclick=()=>shareAny(editing);
+$('aWa').onclick=()=>{$('after').hidden=true;shareWA(lastSaved)};
+$('aAny').onclick=()=>{$('after').hidden=true;shareAny(lastSaved)};
+$('aSkip').onclick=()=>{$('after').hidden=true};
+$('after').onclick=e=>{if(e.target===$('after'))$('after').hidden=true};
+/* ---- bill numbers ---- */
+store.prefix=store.prefix||'INV-';
+function nextNo(){let n=store.next,s;do{s=store.prefix+String(n).padStart(store.pad||4,'0');n++}while(store.bills.some(b=>b.no.toLowerCase()===s.toLowerCase()));return s}
+function advance(no){const m=no.match(/^(.*?)(\d+)$/);if(m){store.prefix=m[1];store.pad=m[2].length;store.next=parseInt(m[2],10)+1}}
+/* ---- ledger ---- */
+store.payments=store.payments||[];
+const pkey=n=>(n||'').trim().toLowerCase();
+const billTot=b=>calc(b.items,b.tax,b.disc).tot;
+let ledKey=null,ledState='list',payEdit=null;
+function ledgerData(){
+  const m={};
+  const g=name=>{const k=pkey(name);return m[k]=m[k]||{key:k,name:name.trim(),billed:0,recd:0,bills:[],pays:[]}};
+  store.bills.forEach(b=>{if(!b.customer)return;const p=g(b.customer);p.name=b.customer.trim();if(b.status==='due'){p.billed+=billTot(b);p.bills.push(b)}});
+  store.payments.forEach(y=>{const p=g(y.party);p.recd+=+y.amount||0;p.pays.push(y)});
+  const r=Object.values(m);r.forEach(p=>p.bal=p.billed-p.recd);return r;
+}
+function totalDue(){return ledgerData().reduce((a,p)=>a+Math.max(0,p.bal),0)}
+function ledShow(s){ledState=s;if(s==='list')ledKey=null;$('ledList').hidden=s!=='list';$('ledDet').hidden=s!=='det';$('payForm').hidden=s!=='form';$('ledBack').textContent=s==='list'?'Close':'Back';$('ledAdd').hidden=s==='form';if(s==='list')$('ledTtl').textContent='Ledger';if(s==='form')$('ledTtl').textContent='Payment'}
+function ledRender(){
+  const ps=ledgerData().sort((a,b)=>b.bal-a.bal);
+  $('ledList').innerHTML=`<div class="sum"><div><small>Total due from parties</small><b>${money(totalDue())}</b></div></div>`+(ps.length?ps.map(p=>`<button class="bill" data-k="${esc(p.key)}"><div><div class="n">${esc(p.name)}</div><div class="m">${p.bills.length} unpaid bill${p.bills.length===1?'':'s'} · received ${money(p.recd)}</div></div><div class="r"><div class="n">${money(Math.abs(p.bal))}</div><span class="tag ${p.bal>0.005?'due':'paid'}">${p.bal>0.005?'Due':p.bal<-0.005?'Advance':'Settled'}</span></div></button>`).join(''):'<div class="empty">No parties yet. Create a bill first, then record payments here.</div>');
+}
+function ledDetail(k){
+  const p=ledgerData().find(x=>x.key===k);
+  if(!p){ledRender();ledShow('list');return}
+  ledKey=k;let pool=p.recd;
+  const bl=p.bills.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id).map(b=>{const t=billTot(b),c=Math.min(pool,t);pool-=c;const full=c>=t-.005;return `<div class="bill" style="cursor:default"><div><div class="n">${esc(b.no)}</div><div class="m">${esc(b.date)}</div></div><div class="r"><div class="n">${money(t)}</div><span class="tag ${full?'paid':'due'}">${full?'Covered':c>0?'Part paid, '+money(t-c)+' due':'Unpaid'}</span></div></div>`}).join('');
+  const py=p.pays.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).map(y=>`<button class="bill" data-y="${y.id}"><div><div class="n">${money(+y.amount)}</div><div class="m">${esc(y.date)} · ${esc(y.mode)}${y.note?' · '+esc(y.note):''}</div></div><span class="m">Edit</span></button>`).join('');
+  $('ledDet').innerHTML=`<div class="sum"><div><small>Unpaid bills</small><b>${money(p.billed)}</b></div><div><small>Received</small><b>${money(p.recd)}</b></div></div><div class="tot"><div class="g"><span>${p.bal<-0.005?'Advance received':'Balance due'}</span><span>${money(Math.abs(p.bal))}</span></div></div>${p.bal>0.005?'<button class="btn wa" data-rem="1">Send balance on WhatsApp</button>':''}<label>Unpaid bills (oldest first)</label>${bl||'<div class="empty">No unpaid bills.</div>'}<label>Payments received</label>${py||'<div class="empty">No payments yet. Tap Add payment.</div>'}<p class="hint">Bills marked Paid are not counted here, so do not add a payment for them.</p>`;
+  $('ledTtl').textContent=p.name;ledShow('det');$('ledTtl').textContent=p.name;
+}
+function openPay(y,k){
+  payEdit=y;const names=new Map();
+  ledgerData().forEach(p=>names.set(p.key,p.name));
+  store.parties.filter(p=>p.kind!=='seller').forEach(p=>{if(!names.has(pkey(p.name)))names.set(pkey(p.name),p.name)});
+  $('ypt').innerHTML=[...names.values()].map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const sel=y?y.party:(k&&names.get(k))||'';
+  if(sel&&![...names.values()].includes(sel))$('ypt').insertAdjacentHTML('beforeend',`<option value="${esc(sel)}">${esc(sel)}</option>`);
+  if(sel)$('ypt').value=sel;
+  $('yam').value=y?y.amount:'';$('ydt').value=y?y.date:new Date().toISOString().slice(0,10);$('ymd').value=y?y.mode:'Cash';$('ynt').value=y&&y.note||'';
+  $('yDel').hidden=!y;ledShow('form');
+}
+const ledBackTo=()=>{if(ledKey&&ledgerData().some(x=>x.key===ledKey))ledDetail(ledKey);else{ledRender();ledShow('list')}};
+$('ledBtn').onclick=()=>{$('led').hidden=false;ledRender();ledShow('list')};
+$('ledBack').onclick=()=>{if(ledState==='form')ledBackTo();else if(ledState==='det'){ledRender();ledShow('list')}else{$('led').hidden=true;renderList()}};
+$('ledAdd').onclick=()=>openPay(null,ledState==='det'?ledKey:null);
+$('yCancel').onclick=ledBackTo;
+$('ledList').onclick=e=>{const b=e.target.closest('.bill');if(b)ledDetail(b.dataset.k)};
+$('ledDet').onclick=e=>{
+  const b=e.target.closest('[data-y]');if(b){openPay(store.payments.find(y=>y.id===+b.dataset.y));return}
+  if(e.target.dataset.rem){
+    const p=ledgerData().find(x=>x.key===ledKey),k=ledKey;if(!p)return;
+    const ph=(store.bills.find(x=>pkey(x.customer)===k&&x.phone)||{}).phone||(store.parties.find(x=>pkey(x.name)===k&&x.phone)||{}).phone||'';
+    const s=p.bills[0]?sellerFor(p.bills[0]):{};
+    waSend(ph,`Hello ${p.name}, your outstanding balance${s.name?' with '+s.name:''} is ${money(p.bal)}. Unpaid bills: ${p.bills.map(x=>x.no).join(', ')||'none'}. Please let us know once paid. Thank you.`);
+  }
+};
+$('ySave').onclick=()=>{
+  const party=$('ypt').value,amt=+$('yam').value;
+  if(!party){toast('Add a customer first, in a bill or Master data');return}
+  if(!(amt>0)){toast('Enter the amount received');return}
+  const d={party,amount:amt,date:$('ydt').value||new Date().toISOString().slice(0,10),mode:$('ymd').value,note:$('ynt').value.trim()};
+  if(payEdit)Object.assign(payEdit,d);else store.payments.push({id:Date.now(),...d});
+  persist();ledDetail(pkey(party));toast('Payment saved');
+};
+$('yDel').onclick=()=>{if(payEdit&&confirm('Delete this payment?')){store.payments=store.payments.filter(y=>y!==payEdit);persist();ledBackTo()}};
+function waSend(phone,text){let n=(phone||'').replace(/\D/g,'');if(n.length===10&&store.cur==='₹')n='91'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(text),'_blank')}
+/* ---- backup ---- */
+function bkInfo(){$('bkInfo').textContent=`${store.bills.length} bills, ${store.payments.length} payments, ${store.parties.length} master entries. Last backup: ${store.lastBackup?new Date(store.lastBackup).toLocaleDateString():'never'}.`}
+function bkNoteUpdate(){const old=!store.lastBackup||Date.now()-store.lastBackup>7*864e5;$('bkNote').hidden=!(store.bills.length&&old);$('bkNote').textContent=store.lastBackup?'Your last backup is over a week old. Tap Backup and restore.':'You have not backed up yet. Tap Backup and restore.'}
+function markBk(){store.lastBackup=Date.now();persist();bkInfo()}
+$('bkBtn').onclick=()=>{$('bk').hidden=false;bkInfo()};
+$('bkClose').onclick=()=>{$('bk').hidden=true;bkNoteUpdate()};
+$('bkDl').onclick=async()=>{
+  const json=JSON.stringify(store),name='billbook-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  $('bkText').value=json;
+  try{const f=new File([json],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});markBk();return}}catch(e){if(e.name==='AbortError')return}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();markBk();toast('Backup file saved')}catch(e){toast('Could not save a file. Copy the text below instead')}
+};
+$('bkCopy').onclick=async()=>{const j=JSON.stringify(store);$('bkText').value=j;try{await navigator.clipboard.writeText(j);markBk();toast('Backup text copied')}catch(e){$('bkText').select();toast('Select the text below and copy it')}};
+function restore(txt){
+  let d;try{d=JSON.parse(txt)}catch(e){toast('That is not a valid backup');return}
+  if(!d||!Array.isArray(d.bills)){toast('That is not a Billbook backup');return}
+  if(!confirm('Restore '+d.bills.length+' bills? This replaces everything on this device.'))return;
+  store=Object.assign({bills:[],next:1,cur:'₹',parties:[],payments:[],prefix:'INV-',biz:{name:'',gstin:'',addr:'',phone:''},mig:1},d);
+  persist();renderList();bkInfo();toast('Backup restored');
+}
+$('bkRestoreTxt').onclick=()=>restore($('bkText').value);
+$('bkFile').onchange=async e=>{const f=e.target.files[0];if(f){restore(await f.text());e.target.value=''}};
+$('q').oninput=()=>renderList();
+/* ---- Code 128 barcode (offline) + iOS web app ---- */
+const C128="212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,114131,311141,411131,211412,211214,211232,2331112".split(',');
+function barcodeSVG(txt){
+  const v=[...String(txt)].map(c=>{const k=c.charCodeAt(0);return k>=32&&k<=126?k-32:13});
+  let sum=104;v.forEach((x,i)=>sum+=x*(i+1));
+  const all=[104,...v,sum%103,106];let x=10,r='';
+  all.forEach(n=>{const q=C128[n];for(let i=0;i<q.length;i++){const w=+q[i];if(i%2===0)r+=`<rect x="${x}" y="0" width="${w}" height="44" fill="#000"/>`;x+=w}});
+  const W=x+10;
+  return `<svg id="bcSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} 60" width="200" height="${(60*200/W).toFixed(1)}" style="float:right"><rect width="${W}" height="60" fill="#fff"/>${r}<text x="${W/2}" y="57" text-anchor="middle" font-size="11" font-family="Arial,sans-serif">${esc(txt)}</text></svg>`;
+}
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+renderList();
+</script>
+</body>
+</html>
